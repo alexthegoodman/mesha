@@ -18,6 +18,11 @@ export default class MeshaCanvas {
       throw new Error("WebGPU not supported");
     }
 
+    await this.setupDevice();
+    this.configureContext();
+  }
+
+  async setupDevice() {
     this.adapter = await navigator.gpu.requestAdapter();
 
     if (!this.adapter) {
@@ -25,6 +30,12 @@ export default class MeshaCanvas {
     }
 
     this.device = await this.adapter.requestDevice();
+  }
+
+  configureContext() {
+    if (!this.canvas) {
+      throw new Error("Canvas element not found");
+    }
 
     if (!this.device) {
       throw new Error("GPUDevice not found");
@@ -32,14 +43,6 @@ export default class MeshaCanvas {
 
     this.context = this.canvas.getContext("webgpu");
     this.format = navigator.gpu.getPreferredCanvasFormat();
-
-    this.configureContext();
-  }
-
-  configureContext() {
-    if (!this.device) {
-      throw new Error("Canvas context could not be configured");
-    }
 
     this.context?.configure({
       device: this.device,
