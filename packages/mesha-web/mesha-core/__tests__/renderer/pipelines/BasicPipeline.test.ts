@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import BasicPipeline from "../../renderer/pipelines/BasicPipeline";
+import BasicPipeline from "../../../renderer/pipelines/BasicPipeline";
 
 describe("BasicPipeline", () => {
   test("should create BasicPipeline class with appropriate properties", () => {

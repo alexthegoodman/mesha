@@ -9,8 +9,8 @@ describe("MeshaCore", () => {
     expect(meshaCore).toBeDefined();
     expect(meshaCore).toBeInstanceOf(MeshaCore);
     expect(meshaCore).toHaveProperty("Helpers");
-    expect(meshaCore).toHaveProperty("Canvas");
-    expect(meshaCore).toHaveProperty("Scene");
+    expect(meshaCore).toHaveProperty("MeshaCanvas");
+    expect(meshaCore).toHaveProperty("MeshaScene");
   });
 
   test("initialize should attach to canvas element and create canvas and scene instances", () => {
@@ -21,8 +21,8 @@ describe("MeshaCore", () => {
     meshaCore.initialize(canvasElement);
 
     expect(meshaCore.canvas).toBeDefined();
-    expect(meshaCore.canvas).toBeInstanceOf(MeshaCore.Canvas);
+    expect(meshaCore.canvas).toBeInstanceOf(MeshaCore.MeshaCanvas);
     expect(meshaCore.scene).toBeDefined();
-    expect(meshaCore.scene).toBeInstanceOf(MeshaCore.Scene);
+    expect(meshaCore.scene).toBeInstanceOf(MeshaCore.MeshaScene);
   });
 });
