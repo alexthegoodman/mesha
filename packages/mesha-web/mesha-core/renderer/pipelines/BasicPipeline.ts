@@ -1,6 +1,11 @@
 import MeshaCanvas from "../../interface/MeshaCanvas";
 import BasicShader from "../shaders/BasicShader.wgsl?raw";
 
+/**
+ * BasicPipeline
+ * How to use: BasicPipeline is meant to be initialized followed by drawing render passes.
+ * Purpose: encapsulate GPU data submission (pipeline)
+ */
 export default class BasicPipeline {
   public meshaCanvas: MeshaCanvas;
   public renderPipeline: GPURenderPipeline | null = null;
@@ -12,6 +17,7 @@ export default class BasicPipeline {
     this.meshaCanvas = meshaCanvas;
   }
 
+  // prepare the pipeline for drawing render passes
   async initialize() {
     if (!this.meshaCanvas.device) {
       throw new Error("GPUDevice not found");
@@ -35,6 +41,7 @@ export default class BasicPipeline {
     }
   }
 
+  // configure the shaders and binding layout for the pipeline
   getPipelineConfiguration(pipelineLayout: GPUPipelineLayout) {
     if (!this.meshaCanvas.device) {
       throw new Error("GPUDevice not found");
@@ -71,6 +78,7 @@ export default class BasicPipeline {
     return pipelineConfiguration;
   }
 
+  // here we define some smart defaults for the render pass
   getRenderPassConfiguration() {
     const textureView = this.meshaCanvas.context
       ?.getCurrentTexture()
@@ -94,6 +102,7 @@ export default class BasicPipeline {
     return renderPassConfiguration;
   }
 
+  // the purpose of drawRenderPass is to actually submit data to the GPU
   drawRenderPass() {
     if (!this.meshaCanvas.device) {
       throw new Error("GPUDevice not found");
@@ -125,6 +134,7 @@ export default class BasicPipeline {
     this.meshaCanvas.device.queue.submit([this.commandEncoder.finish()]);
   }
 
+  // the purpose of layout is to bind data to the shaders
   initLayouts() {
     if (!this.meshaCanvas.device) {
       throw new Error("GPUDevice not found");
