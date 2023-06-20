@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vitest";
 import MeshaCanvas from "../../interface/MeshaCanvas";
 
 import { vi } from "vitest";
@@ -14,7 +14,7 @@ const navigator = {
 
 vi.stubGlobal("navigator", navigator);
 
-describe.only("MeshaCanvas", () => {
+describe("MeshaCanvas", () => {
   test("should create MeshaCanvas class with appropriate properties", async () => {
     const canvasElement = document.createElement("canvas");
     const meshaCanvas = new MeshaCanvas();
@@ -34,6 +34,6 @@ describe.only("MeshaCanvas", () => {
     expect(meshaCanvas.adapter).not.toBeNull();
     expect(meshaCanvas.device).not.toBeNull();
     // expect(meshaCanvas.context).not.toBeNull();
-    // expect(meshaCanvas.format).not.toBeNull();
+    expect(meshaCanvas.format).not.toBeNull();
   });
 });
