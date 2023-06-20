@@ -10,3 +10,11 @@ export const GPUBufferUsage = {
   UNIFORM: 64,
   VERTEX: 32,
 };
+
+export const GPUTextureUsage = {
+  COPY_SRC: 1,
+  COPY_DST: 2,
+  RENDER_ATTACHMENT: 16,
+  STORAGE_BINDING: 8,
+  TEXTURE_BINDING: 4,
+};
