@@ -1,3 +1,4 @@
+import Triangle from "../../nodes/mesh/Triangle";
 import MeshaCanvas from "../../interface/MeshaCanvas";
 import BasicShader from "../shaders/BasicShader.wgsl?raw";
 
@@ -16,8 +17,11 @@ export default class BasicPipeline {
   private bindGroupLayout: GPUBindGroupLayout | null = null;
   private bindGroup: GPUBindGroup | null = null;
 
-  constructor(meshaCanvas: MeshaCanvas) {
+  public triangle: Triangle;
+
+  constructor(meshaCanvas: MeshaCanvas, triangle: Triangle) {
     this.meshaCanvas = meshaCanvas;
+    this.triangle = triangle;
   }
 
   // prepare the pipeline for drawing render passes
@@ -63,6 +67,7 @@ export default class BasicPipeline {
       vertex: {
         module: vertexShaderModule,
         entryPoint: "main_vertex",
+        buffers: [this.triangle.bufferLayout],
       },
       fragment: {
         module: fragmentShaderModule,
@@ -132,6 +137,7 @@ export default class BasicPipeline {
 
     this.renderPass.setPipeline(this.renderPipeline);
     this.renderPass.setBindGroup(0, this.bindGroup);
+    this.renderPass.setVertexBuffer(0, this.triangle.buffer);
     this.renderPass.draw(3, 1, 0, 0);
     this.renderPass.end();
 

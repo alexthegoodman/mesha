@@ -4,7 +4,7 @@ import MeshaNode from "../MeshaNode";
 
 export default class Triangle extends MeshaNode {
   public meshaCanvas: MeshaCanvas;
-  private buffer: GPUBuffer | null = null;
+  public buffer: GPUBuffer | null = null;
   public bufferLayout: GPUVertexBufferLayout | null = null;
 
   // prettier-ignore
