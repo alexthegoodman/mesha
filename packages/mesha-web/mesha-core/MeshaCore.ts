@@ -14,5 +14,6 @@ export default class MeshaCore {
 
     const basicPipeline = new BasicPipeline(meshaCanvas, triangle);
     await basicPipeline.initialize();
+    await basicPipeline.drawRenderPass();
   }
 }

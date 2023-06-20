@@ -4,7 +4,7 @@ struct Vertex {
 }
 
 @vertex
-fn main_vertex(@location(0) vertexPosition vec2<f32>, @location(1) vertexColor: vec3<f32>) -> Vertex {
+fn main_vertex(@location(0) vertexPosition: vec2<f32>, @location(1) vertexColor: vec3<f32>) -> Vertex {
     var output : Vertex;
     output.Position = vec4<f32>(vertexPosition, 0.0, 1.0);
     output.Color = vec4<f32>(vertexColor, 1.0);

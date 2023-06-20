@@ -108,6 +108,8 @@ export default class BasicPipeline {
       ],
     };
 
+    console.info("renderPassConfiguration", renderPassConfiguration);
+
     return renderPassConfiguration;
   }
 
