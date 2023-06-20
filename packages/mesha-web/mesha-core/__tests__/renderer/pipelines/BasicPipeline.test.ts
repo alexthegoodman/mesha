@@ -1,19 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import BasicPipeline from "../../../renderer/pipelines/BasicPipeline";
 import MeshaCanvas from "../../../interface/MeshaCanvas";
-
-const navigator = {
-  gpu: {
-    requestAdapter: vi.fn(() => ({
-      requestDevice: vi.fn(() => ({
-        createShaderModule: vi.fn(() => ({})),
-        createRenderPipeline: vi.fn(() => ({})),
-        createCommandEncoder: vi.fn(() => ({})),
-      })),
-    })),
-    getPreferredCanvasFormat: vi.fn(() => ({})),
-  },
-};
+import { navigator } from "../../stubs/gpu";
 
 vi.stubGlobal("navigator", navigator);
 
@@ -52,9 +40,7 @@ describe("BasicPipeline", () => {
 
     await basicPipeline.initialize();
 
-    const pipelineConfiguration = basicPipeline.getPipelineConfiguration(
-      {} as any
-    );
+    const pipelineConfiguration = basicPipeline.getPipelineConfiguration();
 
     expect(pipelineConfiguration).toBeDefined();
     expect(pipelineConfiguration.vertex.entryPoint).toEqual("main_vertex");

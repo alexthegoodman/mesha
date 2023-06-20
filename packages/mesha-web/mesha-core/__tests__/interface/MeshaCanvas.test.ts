@@ -2,15 +2,7 @@ import { beforeAll, describe, expect, test } from "vitest";
 import MeshaCanvas from "../../interface/MeshaCanvas";
 
 import { vi } from "vitest";
-
-const navigator = {
-  gpu: {
-    requestAdapter: vi.fn(() => ({
-      requestDevice: vi.fn(() => ({})),
-    })),
-    getPreferredCanvasFormat: vi.fn(() => ({})),
-  },
-};
+import { navigator } from "../stubs/gpu";
 
 vi.stubGlobal("navigator", navigator);
 

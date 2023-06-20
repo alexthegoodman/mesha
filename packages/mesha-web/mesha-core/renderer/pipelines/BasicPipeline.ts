@@ -11,7 +11,10 @@ export default class BasicPipeline {
   public renderPipeline: GPURenderPipeline | null = null;
   public commandEncoder: GPUCommandEncoder | null = null;
   public renderPass: GPURenderPassEncoder | null = null;
-  public bindGroup: GPUBindGroup | null = null;
+
+  private pipelineLayout: GPUPipelineLayout | "auto" = "auto";
+  private bindGroupLayout: GPUBindGroupLayout | null = null;
+  private bindGroup: GPUBindGroup | null = null;
 
   constructor(meshaCanvas: MeshaCanvas) {
     this.meshaCanvas = meshaCanvas;
@@ -23,8 +26,9 @@ export default class BasicPipeline {
       throw new Error("GPUDevice not found");
     }
 
-    const { pipelineLayout, bindGroupLayout } = this.initLayouts();
-    const pipelineConfiguration = this.getPipelineConfiguration(pipelineLayout);
+    this.initLayouts();
+
+    const pipelineConfiguration = this.getPipelineConfiguration();
 
     this.renderPipeline = this.meshaCanvas.device.createRenderPipeline(
       pipelineConfiguration
@@ -42,7 +46,7 @@ export default class BasicPipeline {
   }
 
   // configure the shaders and binding layout for the pipeline
-  getPipelineConfiguration(pipelineLayout: GPUPipelineLayout) {
+  getPipelineConfiguration() {
     if (!this.meshaCanvas.device) {
       throw new Error("GPUDevice not found");
     }
@@ -72,7 +76,7 @@ export default class BasicPipeline {
       primitive: {
         topology: "triangle-list",
       },
-      layout: pipelineLayout,
+      layout: this.pipelineLayout,
     };
 
     return pipelineConfiguration;
@@ -140,19 +144,17 @@ export default class BasicPipeline {
       throw new Error("GPUDevice not found");
     }
 
-    const bindGroupLayout = this.meshaCanvas.device.createBindGroupLayout({
+    this.bindGroupLayout = this.meshaCanvas.device.createBindGroupLayout({
       entries: [],
     });
 
-    const pipelineLayout = this.meshaCanvas.device.createPipelineLayout({
-      bindGroupLayouts: [bindGroupLayout],
+    this.pipelineLayout = this.meshaCanvas.device.createPipelineLayout({
+      bindGroupLayouts: [this.bindGroupLayout],
     });
 
     this.bindGroup = this.meshaCanvas.device.createBindGroup({
-      layout: bindGroupLayout,
+      layout: this.bindGroupLayout,
       entries: [],
     });
-
-    return { pipelineLayout, bindGroupLayout };
   }
 }
