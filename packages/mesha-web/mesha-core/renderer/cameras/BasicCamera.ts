@@ -16,7 +16,7 @@ export default class BasicCamera {
   ) {
     const viewMatrix = mat4.create();
     const projectionMatrix = mat4.create();
-    const viewProjectionMatrix = mat4.create();
+    const vpMatrix = mat4.create();
 
     mat4.perspective(
       projectionMatrix,
@@ -28,60 +28,69 @@ export default class BasicCamera {
 
     mat4.lookAt(viewMatrix, cameraPosition, lookDirection, upDirection);
 
-    mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix);
+    mat4.multiply(vpMatrix, projectionMatrix, viewMatrix);
 
-    const cameraOption = {
-      eye: cameraPosition,
-      center: lookDirection,
-      zoomMax: 100,
-      zoomSpeed: 2,
-    };
+    // const cameraOption = {
+    //   eye: cameraPosition,
+    //   center: lookDirection,
+    //   zoomMax: 100,
+    //   zoomSpeed: 2,
+    // };
 
     return {
       viewMatrix,
       projectionMatrix,
-      viewProjectionMatrix,
-      cameraOption,
+      vpMatrix,
+      // cameraOption,
     };
   }
 
   createTransforms(
-    modelMat: mat4,
     translation: vec3 = [0, 0, 0],
     rotation: vec3 = [0, 0, 0],
     scaling: vec3 = [1, 1, 1]
   ) {
-    const rotateXMat = mat4.create();
-    const rotateYMat = mat4.create();
-    const rotateZMat = mat4.create();
-    const translateMat = mat4.create();
+    const modelMatrix = mat4.create();
+    const rotateXMatrix = mat4.create();
+    const rotateYMatrix = mat4.create();
+    const rotateZMatrix = mat4.create();
+    const translateMatrix = mat4.create();
     const scaleMat = mat4.create();
 
     // perform individual transformations
-    mat4.fromTranslation(translateMat, translation);
-    mat4.fromXRotation(rotateXMat, rotation[0]);
-    mat4.fromYRotation(rotateYMat, rotation[1]);
-    mat4.fromZRotation(rotateZMat, rotation[2]);
+    mat4.fromTranslation(translateMatrix, translation);
+    mat4.fromXRotation(rotateXMatrix, rotation[0]);
+    mat4.fromYRotation(rotateYMatrix, rotation[1]);
+    mat4.fromZRotation(rotateZMatrix, rotation[2]);
     mat4.fromScaling(scaleMat, scaling);
 
     // combine transformations
-    mat4.multiply(modelMat, rotateXMat, scaleMat);
-    mat4.multiply(modelMat, rotateYMat, modelMat);
-    mat4.multiply(modelMat, rotateZMat, modelMat);
-    mat4.multiply(modelMat, translateMat, modelMat);
+    mat4.multiply(modelMatrix, rotateXMatrix, scaleMat);
+    mat4.multiply(modelMatrix, rotateYMatrix, modelMatrix);
+    mat4.multiply(modelMatrix, rotateZMatrix, modelMatrix);
+    mat4.multiply(modelMatrix, translateMatrix, modelMatrix);
+
+    return modelMatrix;
   }
 
-  createUniformData() {
+  // create the model view projection matrix
+  createMVPMatrix() {
     if (!this.meshaCanvas.canvas) {
       throw new Error("Canvas not found");
     }
 
     const { width, height } = this.meshaCanvas.canvas;
-    const modelMatrix = mat4.create();
+
     const mvpMatrix = mat4.create();
-    let vpMatrix = mat4.create();
-    const vp = this.createViewProjection(width / height);
-    vpMatrix = vp.viewProjectionMatrix;
+
+    // view projection matrix shows the world from the camera's perspective
+    const { vpMatrix } = this.createViewProjection(width / height);
+
+    // model matrix shows the world from the object's perspective
+    const modelMatrix = this.createTransforms();
+
+    // mvp matrix orients the object in the world
+    mat4.multiply(mvpMatrix, vpMatrix, modelMatrix);
 
     return { modelMatrix, mvpMatrix, vpMatrix };
   }

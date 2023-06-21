@@ -21,11 +21,14 @@ export default class BasicPipeline {
   private bindGroup: GPUBindGroup | null = null;
   private uniformBuffer: GPUBuffer | null = null;
 
+  public camera: BasicCamera;
+
   public cube: Cube;
 
   constructor(meshaCanvas: MeshaCanvas, cube: Cube) {
     this.meshaCanvas = meshaCanvas;
     this.cube = cube;
+    this.camera = new BasicCamera(this.meshaCanvas);
   }
 
   // prepare the pipeline for drawing render passes
@@ -166,16 +169,11 @@ export default class BasicPipeline {
       throw new Error("RenderPass creation failed");
     }
 
-    const basicCamera = new BasicCamera(this.meshaCanvas);
-    const { modelMatrix, mvpMatrix, vpMatrix } =
-      basicCamera.createUniformData();
-    basicCamera.createTransforms(modelMatrix);
-
-    mat4.multiply(mvpMatrix, vpMatrix, modelMatrix);
-
     if (!this.uniformBuffer) {
       throw new Error("UniformBuffer not found");
     }
+
+    const { mvpMatrix } = this.camera.createMVPMatrix();
 
     this.meshaCanvas.device.queue.writeBuffer(
       this.uniformBuffer,
@@ -235,7 +233,7 @@ export default class BasicPipeline {
           resource: {
             buffer: this.uniformBuffer,
             offset: 0,
-            size: 4 * 16,
+            size: 4 * 16, // 4x4 matrix
           },
         },
       ],
