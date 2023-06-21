@@ -14,7 +14,6 @@ import { mat4 } from "gl-matrix";
 export default class BasicPipeline {
   public meshaCanvas: MeshaCanvas;
   public renderPipeline: GPURenderPipeline | null = null;
-  public commandEncoder: GPUCommandEncoder | null = null;
   public renderPass: GPURenderPassEncoder | null = null;
 
   private pipelineLayout: GPUPipelineLayout | "auto" = "auto";
@@ -45,12 +44,6 @@ export default class BasicPipeline {
 
     if (!this.renderPipeline) {
       throw new Error("RenderPipeline creation failed");
-    }
-
-    this.commandEncoder = this.meshaCanvas.device.createCommandEncoder();
-
-    if (!this.commandEncoder) {
-      throw new Error("CommandEncoder creation failed");
     }
   }
 
@@ -148,14 +141,11 @@ export default class BasicPipeline {
     return renderPassConfiguration;
   }
 
-  // the purpose of drawRenderPass is to actually submit data to the GPU
-  drawRenderPass() {
+  // the purpose of startRenderPass is to actually submit data to the GPU
+  // and it will rerun itself optimally using requestAnimationFrame
+  startRenderPass() {
     if (!this.meshaCanvas.device) {
       throw new Error("GPUDevice not found");
-    }
-
-    if (!this.commandEncoder) {
-      throw new Error("CommandEncoder not found");
     }
 
     if (!this.renderPipeline) {
@@ -164,9 +154,13 @@ export default class BasicPipeline {
 
     const renderPassConfiguration = this.getRenderPassConfiguration();
 
-    this.renderPass = this.commandEncoder.beginRenderPass(
-      renderPassConfiguration
-    );
+    const commandEncoder = this.meshaCanvas.device.createCommandEncoder();
+
+    if (!commandEncoder) {
+      throw new Error("CommandEncoder creation failed");
+    }
+
+    this.renderPass = commandEncoder.beginRenderPass(renderPassConfiguration);
 
     if (!this.renderPass) {
       throw new Error("RenderPass creation failed");
@@ -198,7 +192,11 @@ export default class BasicPipeline {
     this.renderPass.draw(vertexCount);
     this.renderPass.end();
 
-    this.meshaCanvas.device.queue.submit([this.commandEncoder.finish()]);
+    this.meshaCanvas.device.queue.submit([commandEncoder.finish()]);
+
+    requestAnimationFrame(() => {
+      this.startRenderPass();
+    });
   }
 
   // the purpose of layout is to bind data to the shaders
