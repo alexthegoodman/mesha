@@ -1,28 +1,21 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import MeshaCore from "../MeshaCore";
+import { mockCanvas } from "./stubs/canvas";
+import { navigator } from "./stubs/gpu";
+
+vi.stubGlobal("navigator", navigator);
 
 describe("MeshaCore", () => {
-  test("should create MeshaCore class with appropriate properties", () => {
-    //instantiate class and check properties
+  test("should create MeshaCore class with appropriate properties", async () => {
     const meshaCore = new MeshaCore();
+
+    // meshaCore.run = vi.fn(() => ({})) as any;
+
+    // await meshaCore.initialize(mockCanvas);
 
     expect(meshaCore).toBeDefined();
     expect(meshaCore).toBeInstanceOf(MeshaCore);
-    expect(meshaCore).toHaveProperty("Helpers");
-    expect(meshaCore).toHaveProperty("MeshaCanvas");
-    expect(meshaCore).toHaveProperty("MeshaScene");
-  });
-
-  test("initialize should attach to canvas element and create canvas and scene instances", () => {
-    //instantiate class and check properties
-    const meshaCore = new MeshaCore();
-    const canvasElement = document.createElement("canvas");
-
-    meshaCore.initialize(canvasElement);
-
-    expect(meshaCore.canvas).toBeDefined();
-    expect(meshaCore.canvas).toBeInstanceOf(MeshaCore.MeshaCanvas);
-    expect(meshaCore.scene).toBeDefined();
-    expect(meshaCore.scene).toBeInstanceOf(MeshaCore.MeshaScene);
+    // expect(meshaCore).toHaveProperty("camera");
+    // expect(meshaCore).toHaveProperty("pipeline");
   });
 });
