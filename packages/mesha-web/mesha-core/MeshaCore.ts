@@ -22,6 +22,12 @@ export default class MeshaCore {
     const cube = new Cube(meshaCanvas);
     await cube.initialize();
 
+    // const pyramid = new Pyramid(meshaCanvas);
+    // await pyramid.initialize();
+
+    // const meshaScene = new MeshaScene();
+    // await meshaScene.initialize([pyramid, cube]);
+
     this.pipeline = new BasicPipeline(meshaCanvas, this.camera, cube);
     await this.pipeline.initialize();
 

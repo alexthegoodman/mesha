@@ -2,15 +2,15 @@ import { describe, expect, test, vi } from "vitest";
 import MeshaCanvas from "../../../interface/MeshaCanvas";
 import { navigator } from "../../stubs/gpu";
 import Triangle from "../../../nodes/mesh/Triangle";
+import { mockCanvas } from "../../stubs/canvas";
 
 vi.stubGlobal("navigator", navigator);
 
 describe("Triangle mesh node", () => {
   test("should create Triangle class with appropriate properties", async () => {
-    const canvasElement = document.createElement("canvas");
     const meshaCanvas = new MeshaCanvas();
 
-    await meshaCanvas.initialize(canvasElement);
+    await meshaCanvas.initialize(mockCanvas);
 
     const triangle = new Triangle(meshaCanvas);
 

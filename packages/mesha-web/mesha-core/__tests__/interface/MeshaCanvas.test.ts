@@ -3,19 +3,13 @@ import MeshaCanvas from "../../interface/MeshaCanvas";
 
 import { vi } from "vitest";
 import { navigator } from "../stubs/gpu";
+import { mockCanvas } from "../stubs/canvas";
 
 vi.stubGlobal("navigator", navigator);
 
 describe("MeshaCanvas", () => {
   test("should create MeshaCanvas class with appropriate properties", async () => {
-    // const canvasElement = document.createElement("canvas");
     const meshaCanvas = new MeshaCanvas();
-
-    const mockCanvas = {
-      getContext: vi.fn(() => ({
-        configure: vi.fn(() => ({})),
-      })),
-    } as unknown as HTMLCanvasElement;
 
     await meshaCanvas.initialize(mockCanvas);
 

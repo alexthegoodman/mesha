@@ -1,4 +1,4 @@
-import BasicMath from "@/mesha-core/helpers/BasicMath";
+import BasicMath from "../../helpers/BasicMath";
 import MeshaCanvas from "../../interface/MeshaCanvas";
 import { vec3, mat4, vec4 } from "gl-matrix";
 
