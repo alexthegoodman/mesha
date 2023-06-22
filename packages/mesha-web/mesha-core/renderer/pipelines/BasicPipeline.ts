@@ -19,7 +19,7 @@ export default class BasicPipeline {
   private pipelineLayout: GPUPipelineLayout | "auto" = "auto";
   private bindGroupLayout: GPUBindGroupLayout | null = null;
   private bindGroup: GPUBindGroup | null = null;
-  private uniformBuffer: GPUBuffer | null = null;
+  public uniformBuffer: GPUBuffer | null = null;
 
   public camera: BasicCamera;
 

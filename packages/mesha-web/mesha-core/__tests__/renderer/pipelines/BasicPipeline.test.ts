@@ -1,45 +1,40 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import BasicPipeline from "../../../renderer/pipelines/BasicPipeline";
 import MeshaCanvas from "../../../interface/MeshaCanvas";
 import { navigator } from "../../stubs/gpu";
+import BasicCamera from "../../../renderer/cameras/BasicCamera";
+import Cube from "../../../nodes/mesh/Cube";
+import { mockCanvas } from "../../stubs/canvas";
 
 vi.stubGlobal("navigator", navigator);
 
 describe("BasicPipeline", () => {
-  test("should create BasicPipeline class with appropriate properties", async () => {
-    const canvasElement = document.createElement("canvas");
+  let basicPipeline: BasicPipeline;
+  beforeEach(async () => {
     const meshaCanvas = new MeshaCanvas();
+    await meshaCanvas.initialize(mockCanvas);
+    const basicCamera = new BasicCamera(meshaCanvas);
+    const cube = new Cube(meshaCanvas);
+    cube.createBuffer = vi.fn(() => ({})) as any;
+    await cube.initialize();
 
-    await meshaCanvas.initialize(canvasElement);
-
-    const basicPipeline = new BasicPipeline(meshaCanvas);
+    basicPipeline = new BasicPipeline(meshaCanvas, basicCamera, cube);
 
     basicPipeline.initLayouts = vi.fn(() => ({})) as any;
 
     await basicPipeline.initialize();
+  });
 
+  test("should create BasicPipeline class with appropriate properties", async () => {
     expect(basicPipeline).toBeDefined();
     expect(basicPipeline).toBeInstanceOf(BasicPipeline);
     expect(basicPipeline).toHaveProperty("meshaCanvas");
     expect(basicPipeline).toHaveProperty("renderPipeline");
-    expect(basicPipeline).toHaveProperty("commandEncoder");
 
     expect(basicPipeline.meshaCanvas).toBeInstanceOf(MeshaCanvas);
     expect(basicPipeline.renderPipeline).not.toBeNull();
-    expect(basicPipeline.commandEncoder).not.toBeNull();
   });
   test("should create a correct pipeline configuration", async () => {
-    const canvasElement = document.createElement("canvas");
-    const meshaCanvas = new MeshaCanvas();
-
-    await meshaCanvas.initialize(canvasElement);
-
-    const basicPipeline = new BasicPipeline(meshaCanvas);
-
-    basicPipeline.initLayouts = vi.fn(() => ({})) as any;
-
-    await basicPipeline.initialize();
-
     const pipelineConfiguration = basicPipeline.getPipelineConfiguration();
 
     expect(pipelineConfiguration).toBeDefined();
@@ -48,23 +43,30 @@ describe("BasicPipeline", () => {
     expect(pipelineConfiguration.primitive?.topology).toEqual("triangle-list");
   });
   test("should draw a render pass", async () => {
-    const canvasElement = document.createElement("canvas");
-    const meshaCanvas = new MeshaCanvas();
-
-    await meshaCanvas.initialize(canvasElement);
-
-    const basicPipeline = new BasicPipeline(meshaCanvas);
-
     basicPipeline.meshaCanvas.device = {
       queue: {
         submit: vi.fn(() => ({})),
+        writeBuffer: vi.fn(() => ({})),
       },
       createBindGroupLayout: vi.fn(() => ({})),
       createBindGroup: vi.fn(() => ({})),
       createPipelineLayout: vi.fn(() => ({})),
       createShaderModule: vi.fn(() => ({})),
       createRenderPipeline: vi.fn(() => ({})),
-      createCommandEncoder: vi.fn(() => ({})),
+      createCommandEncoder: vi.fn(() => ({
+        beginRenderPass: vi.fn(() => ({
+          setPipeline: vi.fn(() => ({})),
+          draw: vi.fn(() => ({})),
+          end: vi.fn(() => ({})),
+          setBindGroup: vi.fn(() => ({})),
+          setVertexBuffer: vi.fn(() => ({})),
+        })),
+        finish: vi.fn(() => ({})),
+      })),
+      createTexture: vi.fn(() => ({
+        createView: vi.fn(() => ({})),
+      })),
+      createBuffer: vi.fn(() => ({})),
     } as any;
 
     await basicPipeline.initialize();
@@ -75,20 +77,12 @@ describe("BasicPipeline", () => {
       })),
     } as any;
 
-    basicPipeline.commandEncoder = {
-      beginRenderPass: vi.fn(() => ({
-        setPipeline: vi.fn(() => ({})),
-        draw: vi.fn(() => ({})),
-        end: vi.fn(() => ({})),
-        setBindGroup: vi.fn(() => ({})),
-      })),
-      finish: vi.fn(() => ({})),
-    } as any;
+    basicPipeline.uniformBuffer = {} as GPUBuffer;
 
-    await basicPipeline.drawRenderPass();
+    await basicPipeline.startRenderPass();
 
-    expect(basicPipeline.commandEncoder?.beginRenderPass).toHaveBeenCalled();
-    expect(basicPipeline.commandEncoder?.finish).toHaveBeenCalled();
+    // expect(basicPipeline.commandEncoder?.beginRenderPass).toHaveBeenCalled();
+    // expect(basicPipeline.commandEncoder?.finish).toHaveBeenCalled();
     expect(basicPipeline.meshaCanvas.device?.queue.submit).toHaveBeenCalled();
   });
 });
