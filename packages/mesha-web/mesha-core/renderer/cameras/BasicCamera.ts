@@ -1,97 +1,201 @@
+import BasicMath from "@/mesha-core/helpers/BasicMath";
 import MeshaCanvas from "../../interface/MeshaCanvas";
-import { vec3, mat4 } from "gl-matrix";
+import { vec3, mat4, vec4 } from "gl-matrix";
 
 export default class BasicCamera {
   public meshaCanvas: MeshaCanvas;
+  public cameraPosition: vec3 = [-10, 0, 0];
+  public cameraRotation: vec3 = [0, 0, 0];
+  public lookDirection: vec3 = [0, 0, 0];
+  public upDirection: vec3 = [0, 1, 0];
+  public aspectRatio: number;
+
+  public forwards: vec3 = [0, 0, 0];
+  public right: vec3 = [0, 0, 0];
+  public up: vec3 = [0, 0, 0];
+
+  public fovy: number = (2 * Math.PI) / 5;
+  public near: number = 0.1;
+  public far: number = 100.0;
+
+  public rotationActive: boolean = false;
 
   constructor(meshaCanvas: MeshaCanvas) {
     this.meshaCanvas = meshaCanvas;
+
+    if (!this.meshaCanvas.canvas) {
+      throw new Error("Canvas not found");
+    }
+
+    const { width, height } = this.meshaCanvas.canvas;
+    this.aspectRatio = width / height;
+    this.createControls();
   }
 
-  createViewProjection(
-    aspectRatio = 1.0,
-    cameraPosition: vec3 = [2, 2, 4],
-    lookDirection: vec3 = [0, 0, 0],
-    upDirection: vec3 = [0, 1, 0]
-  ) {
+  createVPMatrix() {
     const viewMatrix = mat4.create();
     const projectionMatrix = mat4.create();
     const vpMatrix = mat4.create();
 
     mat4.perspective(
       projectionMatrix,
-      (2 * Math.PI) / 5,
-      aspectRatio,
-      0.1,
-      100.0
+      this.fovy,
+      this.aspectRatio,
+      this.near,
+      this.far
     );
 
-    mat4.lookAt(viewMatrix, cameraPosition, lookDirection, upDirection);
+    mat4.lookAt(
+      viewMatrix,
+      this.cameraPosition,
+      this.lookDirection,
+      this.upDirection
+    );
 
     mat4.multiply(vpMatrix, projectionMatrix, viewMatrix);
-
-    // const cameraOption = {
-    //   eye: cameraPosition,
-    //   center: lookDirection,
-    //   zoomMax: 100,
-    //   zoomSpeed: 2,
-    // };
 
     return {
       viewMatrix,
       projectionMatrix,
       vpMatrix,
-      // cameraOption,
     };
   }
 
-  createTransforms(
-    translation: vec3 = [0, 0, 0],
-    rotation: vec3 = [0, 0, 0],
-    scaling: vec3 = [1, 1, 1]
-  ) {
-    const modelMatrix = mat4.create();
-    const rotateXMatrix = mat4.create();
-    const rotateYMatrix = mat4.create();
-    const rotateZMatrix = mat4.create();
-    const translateMatrix = mat4.create();
-    const scaleMat = mat4.create();
+  // create the model view projection matrix
+  createMVPMatrix(vpMatrix: mat4, modelMatrix: mat4) {
+    const mvpMatrix = mat4.create();
 
-    // perform individual transformations
-    mat4.fromTranslation(translateMatrix, translation);
-    mat4.fromXRotation(rotateXMatrix, rotation[0]);
-    mat4.fromYRotation(rotateYMatrix, rotation[1]);
-    mat4.fromZRotation(rotateZMatrix, rotation[2]);
-    mat4.fromScaling(scaleMat, scaling);
+    mat4.multiply(mvpMatrix, vpMatrix, modelMatrix);
 
-    // combine transformations
-    mat4.multiply(modelMatrix, rotateXMatrix, scaleMat);
-    mat4.multiply(modelMatrix, rotateYMatrix, modelMatrix);
-    mat4.multiply(modelMatrix, rotateZMatrix, modelMatrix);
-    mat4.multiply(modelMatrix, translateMatrix, modelMatrix);
-
-    return modelMatrix;
+    return mvpMatrix;
   }
 
-  // create the model view projection matrix
-  createMVPMatrix() {
+  update() {
+    const basicMath = new BasicMath();
+
+    // calculate forwards vector for calculating lookDirection
+    this.forwards = [
+      Math.cos(basicMath.degreesToRadians(this.cameraRotation[2])) *
+        Math.cos(basicMath.degreesToRadians(this.cameraRotation[1])),
+      Math.sin(basicMath.degreesToRadians(this.cameraRotation[2])) *
+        Math.cos(basicMath.degreesToRadians(this.cameraRotation[1])),
+      Math.sin(basicMath.degreesToRadians(this.cameraRotation[1])),
+    ];
+
+    this.right = vec3.create();
+    this.up = vec3.create();
+
+    vec3.cross(this.right, this.forwards, this.upDirection);
+    vec3.cross(this.up, this.right, this.forwards);
+
+    const target = vec3.create();
+    vec3.add(target, this.cameraPosition, this.forwards);
+
+    vec3.add(this.lookDirection, this.cameraPosition, this.forwards);
+  }
+
+  createControls() {
     if (!this.meshaCanvas.canvas) {
       throw new Error("Canvas not found");
     }
 
-    const { width, height } = this.meshaCanvas.canvas;
+    document.addEventListener("keydown", (event) => {
+      switch (event.key) {
+        case "ArrowUp":
+          this.moveCamera(0.1, 0);
+          break;
+        case "ArrowDown":
+          this.moveCamera(-0.1, 0);
+          break;
+        case "ArrowLeft":
+          // this.cameraPosition[1] += 0.1;
+          this.moveCamera(0, 0.1);
+          break;
+        case "ArrowRight":
+          // this.cameraPosition[1] -= 0.1;
+          this.moveCamera(0, -0.1);
+          break;
+        case "w":
+          // this.cameraPosition[2] += 0.1;
+          this.moveCamera(0.1, 0);
+          break;
+        case "s":
+          // this.cameraPosition[2] -= 0.1;
+          this.moveCamera(-0.1, 0);
+          break;
+        case "a":
+          // this.cameraRotation[2] += 0.1;
+          this.moveCamera(0, 0.1);
+          break;
+        case "d":
+          // this.cameraRotation[2] -= 0.1;
+          this.moveCamera(0, -0.1);
+          break;
+        case "q":
+          // this.cameraRotation[1] += 0.1;
+          this.spinCamera(0.1, 0);
+          break;
+        case "e":
+          // this.cameraRotation[1] -= 0.1;
+          this.spinCamera(-0.1, 0);
+          break;
+      }
+    });
 
-    const mvpMatrix = mat4.create();
+    // this.meshaCanvas.canvas.addEventListener("wheel", (event) => {
 
-    // view projection matrix shows the world from the camera's perspective
-    const { vpMatrix } = this.createViewProjection(width / height);
+    this.meshaCanvas.canvas.addEventListener("mousedown", (event) => {
+      // this.meshaCanvas.canvas.requestPointerLock();
+      this.rotationActive = true;
+    });
 
-    // model matrix shows the world from the object's perspective
-    const modelMatrix = this.createTransforms();
+    this.meshaCanvas.canvas.addEventListener("mouseup", (event) => {
+      this.rotationActive = false;
+    });
 
-    // mvp matrix orients the object in the world
-    mat4.multiply(mvpMatrix, vpMatrix, modelMatrix);
+    this.meshaCanvas.canvas.addEventListener("mouseleave", (event) => {
+      this.rotationActive = false;
+    });
 
-    return { modelMatrix, mvpMatrix, vpMatrix };
+    this.meshaCanvas.canvas.addEventListener("mousemove", (event) => {
+      if (!this.rotationActive) {
+        return;
+      }
+
+      const { movementX, movementY } = event;
+
+      this.spinCamera(movementX / 5, movementY / 5);
+
+      // this.cameraRotation[2] += movementX / 5;
+      // this.cameraRotation[1] += movementY / 5;
+
+      // console.info("cameraRotation", this.cameraRotation);
+    });
+  }
+
+  spinCamera(dY: number, dX: number) {
+    this.cameraRotation[2] -= dX;
+    this.cameraRotation[2] %= 360;
+
+    this.cameraRotation[1] = Math.min(
+      89,
+      Math.max(-89, this.cameraRotation[1] + dY)
+    );
+  }
+
+  moveCamera(forward: number, right: number) {
+    vec3.scaleAndAdd(
+      this.cameraPosition,
+      this.cameraPosition,
+      this.forwards,
+      forward
+    );
+
+    vec3.scaleAndAdd(
+      this.cameraPosition,
+      this.cameraPosition,
+      this.right,
+      right
+    );
   }
 }

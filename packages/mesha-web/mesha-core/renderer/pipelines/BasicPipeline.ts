@@ -25,10 +25,10 @@ export default class BasicPipeline {
 
   public cube: Cube;
 
-  constructor(meshaCanvas: MeshaCanvas, cube: Cube) {
+  constructor(meshaCanvas: MeshaCanvas, camera: BasicCamera, cube: Cube) {
     this.meshaCanvas = meshaCanvas;
+    this.camera = camera;
     this.cube = cube;
-    this.camera = new BasicCamera(this.meshaCanvas);
   }
 
   // prepare the pipeline for drawing render passes
@@ -173,7 +173,14 @@ export default class BasicPipeline {
       throw new Error("UniformBuffer not found");
     }
 
-    const { mvpMatrix } = this.camera.createMVPMatrix();
+    // vp matrix shows the world from the camera's perspective
+    const { vpMatrix } = this.camera.createVPMatrix();
+
+    // model matrix shows the world from the object's perspective
+    const modelMatrix = this.cube.createModelMatrix();
+
+    // mvp matrix orients the object in the world
+    const mvpMatrix = this.camera.createMVPMatrix(vpMatrix, modelMatrix);
 
     this.meshaCanvas.device.queue.writeBuffer(
       this.uniformBuffer,
@@ -191,10 +198,6 @@ export default class BasicPipeline {
     this.renderPass.end();
 
     this.meshaCanvas.device.queue.submit([commandEncoder.finish()]);
-
-    requestAnimationFrame(() => {
-      this.startRenderPass();
-    });
   }
 
   // the purpose of layout is to bind data to the shaders
