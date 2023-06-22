@@ -44,7 +44,11 @@ export default class MeshaCanvas {
     this.context = this.canvas.getContext("webgpu");
     this.format = navigator.gpu.getPreferredCanvasFormat();
 
-    this.context?.configure({
+    if (!this.context) {
+      throw new Error("WebGPU not supported");
+    }
+
+    this.context.configure({
       device: this.device,
       format: this.format,
     });

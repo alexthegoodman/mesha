@@ -8,10 +8,16 @@ vi.stubGlobal("navigator", navigator);
 
 describe("MeshaCanvas", () => {
   test("should create MeshaCanvas class with appropriate properties", async () => {
-    const canvasElement = document.createElement("canvas");
+    // const canvasElement = document.createElement("canvas");
     const meshaCanvas = new MeshaCanvas();
 
-    await meshaCanvas.initialize(canvasElement);
+    const mockCanvas = {
+      getContext: vi.fn(() => ({
+        configure: vi.fn(() => ({})),
+      })),
+    } as unknown as HTMLCanvasElement;
+
+    await meshaCanvas.initialize(mockCanvas);
 
     expect(meshaCanvas).toBeDefined();
     expect(meshaCanvas).toBeInstanceOf(MeshaCanvas);
@@ -22,10 +28,9 @@ describe("MeshaCanvas", () => {
     expect(meshaCanvas).toHaveProperty("context");
     expect(meshaCanvas).toHaveProperty("format");
 
-    expect(meshaCanvas.canvas).toBeInstanceOf(HTMLCanvasElement);
     expect(meshaCanvas.adapter).not.toBeNull();
     expect(meshaCanvas.device).not.toBeNull();
-    // expect(meshaCanvas.context).not.toBeNull();
+    expect(meshaCanvas.context).not.toBeNull();
     expect(meshaCanvas.format).not.toBeNull();
   });
 });
