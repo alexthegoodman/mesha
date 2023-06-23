@@ -330,6 +330,30 @@ export default class BasicPipeline {
         throw new Error("ReadOnlyStorageBuffer not found");
       }
 
+      // const modelMatrix = node.createModelMatrix();
+
+      // mvp matrix orients the object in the world
+      // const mvpMatrix = this.camera.createMVPMatrix(vpMatrix, modelMatrix);
+      // let objectData: number[] = [];
+
+      // for (let j: number = 0; j < 16; j++) {
+      //   // objectData[16 * i * j] = <number>blankMatrix.at(j);
+      //   objectData[j] = <number>mvpMatrix.at(j);
+      // }
+      // n++;
+
+      // const dataBuffer = new Float32Array(objectData);
+
+      // if (i == 3) {
+      // this.meshaCanvas.device.queue.writeBuffer(
+      //   this.readOnlyStorageBuffer,
+      //   0,
+      //   dataBuffer.buffer
+      //   // 0,
+      //   // i
+      // );
+      // }
+
       const vertexCount = node.vertices.length / 3;
       totalVertices += vertexCount;
 
@@ -341,9 +365,11 @@ export default class BasicPipeline {
       this.renderPass.setVertexBuffer(0, node.vertexBuffer);
       this.renderPass.setVertexBuffer(1, node.colorBuffer);
 
-      this.renderPass.draw(vertexCount, this.nodes.length, 0, 0);
+      // renders nnumber specified of buffers just set
+      this.renderPass.draw(vertexCount, 1, 0, n);
 
       step += 2;
+      n++;
     });
 
     this.renderPass.end();

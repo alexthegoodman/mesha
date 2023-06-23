@@ -58,7 +58,7 @@ export default class MeshaNode {
       GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST;
 
     const bufferConfiguration: GPUBufferDescriptor = {
-      size: data.byteLength * 2,
+      size: data.byteLength,
       usage,
       mappedAtCreation: true,
     };
