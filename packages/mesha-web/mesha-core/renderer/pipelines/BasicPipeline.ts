@@ -5,6 +5,7 @@ import Cube from "../../nodes/mesh/Cube";
 import { GPUBufferUsage, GPUTextureUsage } from "../../def/gpu";
 import BasicCamera from "../cameras/BasicCamera";
 import { mat4 } from "gl-matrix";
+import MeshaNode from "@/mesha-core/nodes/MeshaNode";
 
 /**
  * BasicPipeline
@@ -19,16 +20,46 @@ export default class BasicPipeline {
   private pipelineLayout: GPUPipelineLayout | "auto" = "auto";
   private bindGroupLayout: GPUBindGroupLayout | null = null;
   private bindGroup: GPUBindGroup | null = null;
+
   public uniformBuffer: GPUBuffer | null = null;
+  public readOnlyStorageBuffer: GPUBuffer | null = null;
 
   public camera: BasicCamera;
 
-  public cube: Cube;
+  public nodes: MeshaNode[];
 
-  constructor(meshaCanvas: MeshaCanvas, camera: BasicCamera, cube: Cube) {
+  // specify binding of vertices to shader
+  public bufferLayouts = [
+    {
+      arrayStride: 3 * 4,
+      attributes: [
+        {
+          shaderLocation: 0,
+          offset: 0,
+          format: "float32x3",
+        },
+      ] as GPUVertexAttribute[],
+    },
+    {
+      arrayStride: 3 * 4,
+      attributes: [
+        {
+          shaderLocation: 1,
+          offset: 0,
+          format: "float32x3",
+        },
+      ] as GPUVertexAttribute[],
+    },
+  ];
+
+  constructor(
+    meshaCanvas: MeshaCanvas,
+    camera: BasicCamera,
+    nodes: MeshaNode[]
+  ) {
     this.meshaCanvas = meshaCanvas;
     this.camera = camera;
-    this.cube = cube;
+    this.nodes = nodes;
   }
 
   // prepare the pipeline for drawing render passes
@@ -50,14 +81,77 @@ export default class BasicPipeline {
     }
   }
 
+  // the purpose of layout is to bind data to the shaders
+  initLayouts() {
+    if (!this.meshaCanvas.device) {
+      throw new Error("GPUDevice not found");
+    }
+
+    this.bindGroupLayout = this.meshaCanvas.device.createBindGroupLayout({
+      entries: [
+        // {
+        //   binding: 0,
+        //   visibility: GPUShaderStage.VERTEX,
+        //   buffer: {
+        //     type: "uniform" as "uniform",
+        //   },
+        // },
+        {
+          binding: 0,
+          visibility: GPUShaderStage.VERTEX,
+          buffer: {
+            type: "read-only-storage" as "read-only-storage",
+            hasDynamicOffset: false,
+          },
+        },
+      ],
+    });
+
+    this.pipelineLayout = this.meshaCanvas.device.createPipelineLayout({
+      bindGroupLayouts: [this.bindGroupLayout],
+    });
+
+    // this.uniformBuffer = this.meshaCanvas.device.createBuffer({
+    //   size: 4 * 16,
+    //   usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    // });
+
+    this.readOnlyStorageBuffer = this.meshaCanvas.device.createBuffer({
+      size: 4 * 16 * 1024,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    });
+
+    this.bindGroup = this.meshaCanvas.device.createBindGroup({
+      layout: this.bindGroupLayout,
+      entries: [
+        // {
+        //   binding: 0,
+        //   resource: {
+        //     buffer: this.uniformBuffer,
+        //     offset: 0,
+        //     size: 4 * 16, // 4x4 matrix
+        //   },
+        // },
+        {
+          binding: 0,
+          resource: {
+            buffer: this.readOnlyStorageBuffer,
+            // offset: 0,
+            // size: 4 * 16 * 1024, // 4x4 matrix
+          },
+        },
+      ],
+    });
+  }
+
   // configure the shaders and binding layout for the pipeline
   getPipelineConfiguration() {
     if (!this.meshaCanvas.device) {
       throw new Error("GPUDevice not found");
     }
 
-    if (!this.cube.bufferLayouts) {
-      throw new Error("Cube BufferLayouts not found");
+    if (!this.bufferLayouts) {
+      throw new Error("BufferLayouts not found");
     }
 
     const vertexShaderModule = this.meshaCanvas.device.createShaderModule({
@@ -72,7 +166,7 @@ export default class BasicPipeline {
       vertex: {
         module: vertexShaderModule,
         entryPoint: "main_vertex",
-        buffers: this.cube.bufferLayouts,
+        buffers: this.bufferLayouts,
       },
       fragment: {
         module: fragmentShaderModule,
@@ -169,77 +263,70 @@ export default class BasicPipeline {
       throw new Error("RenderPass creation failed");
     }
 
-    if (!this.uniformBuffer) {
-      throw new Error("UniformBuffer not found");
+    // if (!this.uniformBuffer) {
+    //   throw new Error("UniformBuffer not found");
+    // }
+
+    if (!this.readOnlyStorageBuffer) {
+      throw new Error("ReadOnlyStorageBuffer not found");
     }
+
+    let objectData: number[] = [];
 
     // vp matrix shows the world from the camera's perspective
     const { vpMatrix } = this.camera.createVPMatrix();
 
-    // model matrix shows the world from the object's perspective
-    const modelMatrix = this.cube.createModelMatrix();
+    let mvpMatrices: mat4[] = [];
+    let i = 0;
+    this.nodes.forEach((node) => {
+      // model matrix shows the world from the object's perspective
+      const modelMatrix = node.createModelMatrix();
 
-    // mvp matrix orients the object in the world
-    const mvpMatrix = this.camera.createMVPMatrix(vpMatrix, modelMatrix);
+      // mvp matrix orients the object in the world
+      const mvpMatrix = this.camera.createMVPMatrix(vpMatrix, modelMatrix);
+
+      mvpMatrices.push(mvpMatrix);
+
+      let blankMatrix = mat4.create();
+      for (let j: number = 0; j < 16; j++) {
+        // objectData[16 * i * j] = <number>blankMatrix.at(j);
+        objectData[16 * i + j] = <number>mvpMatrix.at(j);
+      }
+      i++;
+    });
+
+    // this.meshaCanvas.device.queue.writeBuffer(
+    //   this.uniformBuffer,
+    //   0,
+    //   mvpMatrices as unknown as ArrayBuffer
+    // );
+
+    const dataBuffer = new Float32Array(objectData);
 
     this.meshaCanvas.device.queue.writeBuffer(
-      this.uniformBuffer,
+      this.readOnlyStorageBuffer,
       0,
-      mvpMatrix as ArrayBuffer
+      dataBuffer.buffer
+      // 0,
+      // i
     );
-
-    const vertexCount = this.cube.vertices.length / 3;
 
     this.renderPass.setPipeline(this.renderPipeline);
     this.renderPass.setBindGroup(0, this.bindGroup);
-    this.renderPass.setVertexBuffer(0, this.cube.vertexBuffer);
-    this.renderPass.setVertexBuffer(1, this.cube.colorBuffer);
-    this.renderPass.draw(vertexCount);
+
+    this.nodes.forEach((node) => {
+      if (!this.renderPass) {
+        throw new Error("RenderPass not found");
+      }
+
+      const vertexCount = node.vertices.length / 3;
+      this.renderPass.setVertexBuffer(0, node.vertexBuffer);
+      this.renderPass.setVertexBuffer(1, node.colorBuffer);
+      this.renderPass.draw(vertexCount);
+    });
+
     this.renderPass.end();
 
     this.meshaCanvas.device.queue.submit([commandEncoder.finish()]);
-  }
-
-  // the purpose of layout is to bind data to the shaders
-  initLayouts() {
-    if (!this.meshaCanvas.device) {
-      throw new Error("GPUDevice not found");
-    }
-
-    this.bindGroupLayout = this.meshaCanvas.device.createBindGroupLayout({
-      entries: [
-        {
-          binding: 0,
-          visibility: GPUShaderStage.VERTEX,
-          // type: "uniform-buffer" as "uniform-buffer",
-          buffer: {
-            type: "uniform" as "uniform",
-          },
-        },
-      ],
-    });
-
-    this.pipelineLayout = this.meshaCanvas.device.createPipelineLayout({
-      bindGroupLayouts: [this.bindGroupLayout],
-    });
-
-    this.uniformBuffer = this.meshaCanvas.device.createBuffer({
-      size: 4 * 16,
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-    });
-
-    this.bindGroup = this.meshaCanvas.device.createBindGroup({
-      layout: this.bindGroupLayout,
-      entries: [
-        {
-          binding: 0,
-          resource: {
-            buffer: this.uniformBuffer,
-            offset: 0,
-            size: 4 * 16, // 4x4 matrix
-          },
-        },
-      ],
-    });
   }
 }

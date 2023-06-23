@@ -6,35 +6,17 @@ export default class MeshaNode {
   public meshaCanvas: MeshaCanvas;
   public bufferLayouts: Iterable<GPUVertexBufferLayout> | null = null;
 
+  public vertexBuffer: GPUBuffer | null = null;
+  public colorBuffer: GPUBuffer | null = null;
+
+  public vertices: Float32Array = new Float32Array();
+  public colors: Float32Array = new Float32Array();
+
   constructor(meshaCanvas: MeshaCanvas) {
     this.meshaCanvas = meshaCanvas;
   }
 
-  start() {
-    // specify binding of vertices to shader
-    this.bufferLayouts = [
-      {
-        arrayStride: 3 * 4,
-        attributes: [
-          {
-            shaderLocation: 0,
-            offset: 0,
-            format: "float32x3",
-          },
-        ] as GPUVertexAttribute[],
-      },
-      {
-        arrayStride: 3 * 4,
-        attributes: [
-          {
-            shaderLocation: 1,
-            offset: 0,
-            format: "float32x3",
-          },
-        ] as GPUVertexAttribute[],
-      },
-    ];
-  }
+  start() {}
 
   createModelMatrix(
     translation: vec3 = [0, 0, 0],

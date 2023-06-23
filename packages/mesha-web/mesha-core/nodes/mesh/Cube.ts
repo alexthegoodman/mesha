@@ -4,8 +4,6 @@ import MeshaNode from "../MeshaNode";
 
 export default class Cube extends MeshaNode {
   public meshaCanvas: MeshaCanvas;
-  public vertexBuffer: GPUBuffer | null = null;
-  public colorBuffer: GPUBuffer | null = null;
 
   public vertices: Float32Array = vertices;
   public colors: Float32Array = colors;

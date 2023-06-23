@@ -1,7 +1,12 @@
-struct Uniforms {
-    mvpMatrix : mat4x4<f32>
+// struct Uniforms {
+//     mvpMatrices : array<mat4x4<f32>>
+// }
+// @binding(0) @group(0) var<uniform> uniforms : Uniforms;
+
+struct ObjectData {
+    mvpMatrices : array<mat4x4<f32>>
 }
-@binding(0) @group(0) var<uniform> uniforms : Uniforms;
+@binding(0) @group(0) var<storage, read> objects : ObjectData;
 
 struct Vertex {
     @builtin(position) Position : vec4<f32>,
@@ -9,9 +14,12 @@ struct Vertex {
 }
 
 @vertex
-fn main_vertex(@location(0) vertexPosition: vec4<f32>, @location(1) vertexColor: vec4<f32>) -> Vertex {
+fn main_vertex(
+    @builtin(instance_index) instanceIndex: u32,
+    @location(0) vertexPosition: vec4<f32>, 
+    @location(1) vertexColor: vec4<f32>) -> Vertex {
     var output : Vertex;
-    output.Position = uniforms.mvpMatrix * vertexPosition;
+    output.Position = objects.mvpMatrices[instanceIndex] * vertexPosition;
     output.Color = vertexColor;
     return output;
 }
