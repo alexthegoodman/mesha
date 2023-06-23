@@ -1,9 +1,9 @@
-import { colors, vertices } from "../../def/cube";
+import { colors, vertices } from "../../def/pyramid";
 import MeshaCanvas from "../../interface/MeshaCanvas";
 import MeshaNode from "../MeshaNode";
 
-export default class Cube extends MeshaNode {
-  public name: string = "Cube";
+export default class Pyramid extends MeshaNode {
+  public name: string = "Pyramid";
   public meshaCanvas: MeshaCanvas;
 
   public vertices: Float32Array = vertices;

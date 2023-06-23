@@ -267,15 +267,20 @@ export default class BasicPipeline {
     //   throw new Error("UniformBuffer not found");
     // }
 
+    // this.meshaCanvas.device.queue.writeBuffer(
+    //   this.uniformBuffer,
+    //   0,
+    //   mvpMatrices as unknown as ArrayBuffer
+    // );
+
     if (!this.readOnlyStorageBuffer) {
       throw new Error("ReadOnlyStorageBuffer not found");
     }
 
-    let objectData: number[] = [];
-
     // vp matrix shows the world from the camera's perspective
     const { vpMatrix } = this.camera.createVPMatrix();
 
+    let objectData: number[] = [];
     let mvpMatrices: mat4[] = [];
     let i = 0;
     this.nodes.forEach((node) => {
@@ -295,12 +300,6 @@ export default class BasicPipeline {
       i++;
     });
 
-    // this.meshaCanvas.device.queue.writeBuffer(
-    //   this.uniformBuffer,
-    //   0,
-    //   mvpMatrices as unknown as ArrayBuffer
-    // );
-
     const dataBuffer = new Float32Array(objectData);
 
     this.meshaCanvas.device.queue.writeBuffer(
@@ -311,18 +310,40 @@ export default class BasicPipeline {
       // i
     );
 
-    this.renderPass.setPipeline(this.renderPipeline);
-    this.renderPass.setBindGroup(0, this.bindGroup);
-
+    let totalVertices = 0;
+    let step = 2;
+    let n = 0;
     this.nodes.forEach((node) => {
       if (!this.renderPass) {
         throw new Error("RenderPass not found");
       }
 
+      if (!this.renderPipeline) {
+        throw new Error("RenderPipeline not found");
+      }
+
+      if (!this.meshaCanvas.device) {
+        throw new Error("GPUDevice not found");
+      }
+
+      if (!this.readOnlyStorageBuffer) {
+        throw new Error("ReadOnlyStorageBuffer not found");
+      }
+
       const vertexCount = node.vertices.length / 3;
+      totalVertices += vertexCount;
+
+      // console.info("vertexCount", node.name, vertexCount);
+
+      this.renderPass.setPipeline(this.renderPipeline);
+      this.renderPass.setBindGroup(0, this.bindGroup);
+
       this.renderPass.setVertexBuffer(0, node.vertexBuffer);
       this.renderPass.setVertexBuffer(1, node.colorBuffer);
-      this.renderPass.draw(vertexCount);
+
+      this.renderPass.draw(vertexCount, this.nodes.length, 0, 0);
+
+      step += 2;
     });
 
     this.renderPass.end();

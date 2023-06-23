@@ -1,5 +1,6 @@
 import MeshaCanvas from "./interface/MeshaCanvas";
 import Cube from "./nodes/mesh/Cube";
+import Pyramid from "./nodes/mesh/Pyramid";
 import Triangle from "./nodes/mesh/Triangle";
 import BasicCamera from "./renderer/cameras/BasicCamera";
 import BasicPipeline from "./renderer/pipelines/BasicPipeline";
@@ -22,13 +23,28 @@ export default class MeshaCore {
     const cube = new Cube(meshaCanvas);
     await cube.initialize();
 
+    cube.position = [0, 0, -5];
+
+    const cube2 = new Cube(meshaCanvas);
+    await cube2.initialize();
+
+    cube2.position = [0, 0, 0];
+
+    const pyramid = new Pyramid(meshaCanvas);
+    await pyramid.initialize();
+
+    pyramid.position = [0, 0, 5];
+
     // const pyramid = new Pyramid(meshaCanvas);
     // await pyramid.initialize();
 
     // const meshaScene = new MeshaScene();
     // await meshaScene.initialize([pyramid, cube]);
 
-    this.pipeline = new BasicPipeline(meshaCanvas, this.camera, [cube]);
+    this.pipeline = new BasicPipeline(meshaCanvas, this.camera, [
+      cube2,
+      pyramid,
+    ]);
     await this.pipeline.initialize();
 
     this.run();
